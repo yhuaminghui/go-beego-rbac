@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+  
+  <head>
+    <meta charset="UTF-8">
+    <title>添加管理员-WeAdmin Frame型后台管理系统-WeAdmin 1.0</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="../../static/css/font.css">
+		<link rel="stylesheet" href="../../static/css/weadmin.css">
+    <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+      <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  
+  <body>
+    <div class="weadmin-body">
+        <form class="layui-form">
+          <div class="layui-form-item">
+              <label for="name" class="layui-form-label">
+                  <span class="we-red">*</span>登录名
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text" id="name" name="name" required="" lay-verify="required"
+                  autocomplete="off" class="layui-input">
+              </div>
+              <div class="layui-form-mid layui-word-aux">
+                  <span class="we-red">*</span>将会成为您唯一的登入名
+              </div>
+          </div>
+          <div class="layui-form-item">
+              <label for="mobile" class="layui-form-label">
+                  <span class="we-red">*</span>手机
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text" id="mobile" name="mobile" required=""
+                  autocomplete="off" class="layui-input">
+              </div>
+              <div class="layui-form-mid layui-word-aux">
+                  <span class="we-red">*</span>将会成为您唯一的登入名
+              </div>
+          </div>
+          <div class="layui-form-item">
+              <label for="email" class="layui-form-label">
+                  <span class="we-red">*</span>邮箱
+              </label>
+              <div class="layui-input-inline">
+                  <input type="text" id="email" name="email"
+                  autocomplete="off" class="layui-input">
+              </div>
+              <div class="layui-form-mid layui-word-aux">
+                  <span class="we-red">*</span>
+              </div>
+          </div>
+          <div class="layui-form-item">
+              <label class="layui-form-label"><span class="we-red">*</span>角色</label>
+              <div class="layui-input-block role-select">
+
+              </div>
+          </div>
+          <div class="layui-form-item">
+              <label for="L_pass" class="layui-form-label">
+                  <span class="we-red">*</span>密码
+              </label>
+              <div class="layui-input-inline">
+                  <input type="password" id="pass" name="pass" required="" lay-verify="pass"
+                  autocomplete="off" class="layui-input">
+              </div>
+              <div class="layui-form-mid layui-word-aux">
+                  6到16个字符
+              </div>
+          </div>
+          <div class="layui-form-item">
+              <label for="L_repass" class="layui-form-label">
+                  <span class="we-red">*</span>确认密码
+              </label>
+              <div class="layui-input-inline">
+                  <input type="password" id="repass" name="repass" required="" lay-verify="repass"
+                  autocomplete="off" class="layui-input">
+              </div>
+          </div>
+          <div class="layui-form-item">
+              <label for="L_repass" class="layui-form-label"></label>
+              <button  class="layui-btn" lay-filter="add" lay-submit>增加</button>
+          </div>
+      </form>
+    </div>
+		<script src="../../lib/layui/layui.js" charset="utf-8"></script>
+
+    <!-- 自定义js -->
+    <script type="text/javascript" src="/static/common_js/layui_config.js"></script>
+    <script type="text/javascript" src="/static/layui_extenstion/ajax.js"></script>
+    <script type="text/javascript" src="/static/layui_extenstion/tools.js"></script>
+    <script type="text/javascript" src="/static/js/config/request_addr.js"></script>
+
+    <script type="text/javascript">
+
+    // 		layui.extend({
+				// 	admin: '{/}../../static/js/admin'
+				// });
+        layui.use(['form','layer','jquery','ajaxResponse'], function(){
+          var form = layui.form
+            ,$ = layui.jquery
+          	,layer = layui.layer
+            ,processResponse = layui.ajaxResponse;
+           
+          // 获取角色
+          $.get(serverRoleList,{},function(respond){
+            var isSuccess = processResponse.base(respond)
+            if (isSuccess){
+              var data = respond.data
+              var html = ''
+              $(data).each(function(index,value){
+                html += '<input type="checkbox" class="role_select_'+value.id+'" name="role[]" value="'+value.id+'" lay-skin="primary" title="'+value.name+'">'
+              })
+              $('.role-select').append(html)
+            }
+            form.render()
+          },'json')
+
+
+           // 获取url参数
+            var id = getUrlParam('id')
+            if (id != '' || id != undefined)
+            {
+              // 获取当前编辑的管理员数据
+              $.get(serverGetAdmin,{id:id},function(response){
+                var isSuccess = processResponse.base(response)
+                if (isSuccess)
+                {
+                  var data = response.data
+                  // 回显数据
+                  $('#name').val(data.name)
+                  $('#email').val(data.email)
+                  $('#mobile').val(data.mobile)
+                  $('#pass').val(data.password)
+                  $('#repass').val(data.password)
+
+                  $(data.role).each(function(i,v){
+
+                    $('.role_select_' + v.role_id).attr('checked',true)
+                  })
+
+                  form.render()
+                }
+              },'json')
+            }
+
+          //监听提交
+          form.on('submit(add)', function(data){
+            var id = getUrlParam('id')
+            if (id != '' || id != undefined)
+            {
+              data.field.id = id
+            }
+
+            $.post(serverRegisterAddr,data.field,function(response){
+              processResponse.flush(response,true)
+            },'json')
+           
+            return false;
+          });
+        });
+
+        // 获取地址栏参数
+        function getUrlParam(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+            var r = window.location.search.substr(1).match(reg);  //匹配目标参数
+            if (r != null) return unescape(r[2]); return null; //返回参数值
+        }
+    </script>
+  </body>
+
+</html>

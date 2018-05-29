@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>角色管理-WeAdmin Frame型后台管理系统-WeAdmin 1.0</title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+		<link rel="stylesheet" href="../../static/css/font.css">
+		<link rel="stylesheet" href="../../static/css/weadmin.css">
+		<!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+		<!--[if lt IE 9]>
+	      <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+	      <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+	    <![endif]-->
+	</head>
+
+	<body>
+		<div class="weadmin-body">
+			<form action="" method="post" class="layui-form layui-form-pane">
+				<div class="layui-form-item">
+					<label for="name" class="layui-form-label">
+                        <span class="we-red">*</span>角色名
+                    </label>
+					<div class="layui-input-inline">
+						<input type="text" id="name" name="name" required="" lay-verify="required" autocomplete="off" class="layui-input">
+					</div>
+				</div>
+				<div class="layui-form-item layui-form-text">
+					<label class="layui-form-label">
+                        拥有权限
+                    </label>
+					<table class="layui-table layui-input-block">
+						<tbody>
+							<!-- <tr>
+								<td>
+									用户管理
+									<input name="id[]" type="checkbox" value="2">
+								</td> 
+								<td>
+									<div class="layui-input-block">
+										<input name="id[]" type="checkbox" value="1"> 用户停用
+										<input name="id[]" type="checkbox" value="2"> 用户删除
+										<input name="id[]" type="checkbox" value="3"> 用户修改
+										<input name="id[]" type="checkbox" value="4"> 用户改密
+										<input name="id[]" type="checkbox" value="5"> 用户列表
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									文章管理
+									<input name="ids[]" type="checkbox" value="2">
+								</td>
+								<td>
+									<div class="layui-input-block">
+										<input name="ids[]" type="checkbox" value="6"> 文章添加
+										<input name="ids[]" type="checkbox" value="7"> 文章删除
+										<input name="ids[]" type="checkbox" value="8"> 文章修改
+										<input name="ids[]" type="checkbox" value="9"> 文章改密
+									</div>
+								</td>
+							</tr> -->
+						</tbody>
+					</table>
+				</div>
+				<div class="layui-form-item layui-form-text">
+					<label for="desc" class="layui-form-label">
+                        描述
+                    </label>
+					<div class="layui-input-block">
+						<textarea placeholder="请输入内容" id="desc" name="desc" class="layui-textarea"></textarea>
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<button class="layui-btn" lay-submit lay-filter="add">增加</button>
+				</div> 
+			</form>
+		</div>
+		<script src="../../lib/layui/layui.js" charset="utf-8"></script>
+ 
+		<!-- 自定义js -->
+	    <script type="text/javascript" src="/static/common_js/layui_config.js"></script>
+	    <script type="text/javascript" src="/static/layui_extenstion/ajax.js"></script>
+	    <script type="text/javascript" src="/static/layui_extenstion/tools.js"></script>
+	    <script type="text/javascript" src="/static/js/config/request_addr.js"></script>
+
+		<script type="text/javascript">
+			 
+			layui.use(['form', 'layer','jquery','ajaxResponse'], function() {
+				var form = layui.form
+					,layer = layui.layer
+					,$ = layui.jquery
+					,processResponse = layui.ajaxResponse;
+ 
+				// 获取初始数据
+				$.get(serverGetRuleFormRoleAdd,{},function(response){
+					isTrue = processResponse.base(response)
+					if (isTrue){
+						// 添加数据
+						var data = response.data
+						var html = ''
+						$(data).each(function(index,value){
+							html += '<tr>'+
+								'<td>'+ value.name +
+									'<input name="rule_category_id[]" type="checkbox" value="'+value.id+'">'+
+								'</td>'+
+								'<td>'+
+									'<div class="layui-input-block">';
+									$(value.children).each(function(i,v){
+										if(v != null)
+										{
+								html+= '<input name="rule_id[]" type="checkbox" class="rule_select_'+v.id+'" value="'+v.id+'">' + v.name;
+										}
+									})
+								
+									html+= '</div>'+
+								'</td>'+
+							'</tr>';
+						})
+						$('tbody').append(html)
+						form.render()
+					}
+				},'json')
+
+				// 获取url的参数
+				var id = GetQueryString('id')
+				var status = GetQueryString("status")
+				if (id != '' || id != undefined){
+					// 当前是修改，获取数据重新展示
+					$.get(serverGetRoleAndRule,{id:id},function(response){
+						var isSuccess = processResponse.base(response)
+						if (isSuccess){
+							var data = response.data
+							$('#name').val(data.name)
+							$('#desc').text(data.discribe)
+
+							$(data.rule).each(function(index,value){
+								$('.rule_select_'+value.id).attr("checked",true)
+							})
+							form.render()
+						}
+					},'json')
+
+				}
+
+				//监听提交
+				form.on('submit(add)', function(data) {
+					var id = GetQueryString('id')
+					if (id != '' || id != undefined){
+						data.field.id = id
+					}
+					
+					$.post(serverAddRole,data.field,function(response){
+						processResponse.flush(response,true)
+					},'json')
+					console.log(data)
+					return false;
+				});
+
+			});
+
+			function GetQueryString(name)  
+			{  
+			     var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");  
+			     var r = window.location.search.substr(1).match(reg);//search,查询？后面的参数，并匹配正则  
+			     if(r!=null)return  unescape(r[2]); return null;  
+			}  
+		</script>
+	</body>
+
+</html>
